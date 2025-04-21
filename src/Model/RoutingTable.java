@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class RoutingTable {
 
-    private Map<String, RouteEntry> entries = new HashMap<>();
+    private final Map<String, RouteEntry> entries = new HashMap<>();
 
     public void update(String destId, RouteEntry entry) {
         entries.put(destId, entry);
