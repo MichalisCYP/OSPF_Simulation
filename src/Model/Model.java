@@ -6,6 +6,9 @@ import java.util.Set;
 
 public class Model {
 
+    // Model class for the OSPF router
+    // This class represents the core logic of the router, 
+    //including its ID, port, neighbours, routing table, and LSDB
     private final String routerId;
     private final int port;
     private final Map<String, Neighbour> neighbours = new HashMap<>();
@@ -37,14 +40,31 @@ public class Model {
         neighbours.remove(id);
     }
 
-    public void receiveHello(Neighbour neighbour) {
-        System.out.println("[OSPF] Received HELLO from " + neighbour.getId());
+    public void receiveHello(Neighbour neighbour) { //called from the neighbour thread when a hello message is received
+        System.out.println("[OSPF] Received HELLO from " + neighbour.getId() + " with cost " + neighbour.getCost());
         if (neighbour.getState() == OSPFState.DOWN) {
             neighbour.setState(OSPFState.TWOWAY);
-            neighbour.sendHello();
-            addNeighbour(neighbour);
+            // neighbour.sendHello();
             System.out.println("[OSPF] Neighbour " + neighbour.getId() + " is now in state " + neighbour.getState());
+            System.out.println("[OSPF] Moving to the Exchange state");
+            neighbour.setState(OSPFState.EXCHANGE);
+
+            System.out.println("[OSPF] Sending LSA to " + neighbour.getId());
+            sendLSA(neighbour);
         }
+        // now we proceed to the next state
+    }
+
+    public void sendLSA(Neighbour neighbour) { //send LSA to the neighbour
+        // Create a new LSA with the current router's ID, LSDB (its neighbors), and sequence number
+        Map<String, Integer> links = new HashMap<>();
+        for (Map.Entry<String, Neighbour> entry : neighbours.entrySet()) {
+            links.put(entry.getKey(), entry.getValue().getCost());
+        }
+        LSA lsa = new LSA(routerId, links, 1);
+
+        neighbour.sendLSA(lsa);
+        System.out.println("[OSPF] Sent LSA to " + neighbour.getId());
     }
 
     public boolean hasNeighbour(String id) {
@@ -55,18 +75,52 @@ public class Model {
         return neighbours.keySet();
     }
 
-    public void receiveLSA(LSA lsa) {
-        lsdb.addLSA(lsa);
+    public void receiveLSA(LSA lsa) { //called from the neighbour thread when an LSA message is received
+        // lsdb.addLSA(lsa);
         System.out.println("[OSPF] Received LSA from " + lsa.getAdvertisingRouterId());
-        // Further processing can be done here, such as updating the routing table
+        //check if the LSA is already in the LSDB
+        if (lsdb.hasLSA(lsa.getAdvertisingRouterId())) {
+            System.out.println("[OSPF] LSA already exists in LSDB");
+        } else {
+            //if it doesn't exist, add it to the LSDB and flood updated LSA to all neighbours
+            System.out.println("[OSPF] Adding LSA to LSDB");
+            lsdb.addLSA(lsa);
+            System.out.println("[OSPF] Flooding LSA to all neighbours");
+            floodLSA();
+        }
+    }
+
+    public void updateNeighbourCost(String neighbourId, int cost) {
+        Neighbour neighbour = neighbours.get(neighbourId);
+        if (neighbour != null) {
+            neighbour.setCost(cost);
+            System.out.println("[OSPF] Updated cost for neighbour " + neighbourId + " to " + cost);
+        } else {
+            System.out.println("[OSPF] Neighbour " + neighbourId + " not found.");
+        }
     }
 
     public LSDB getLSDB() {
         return lsdb;
     }
 
-    public void calculateRoutes() {
+    public void floodLSA() {
+        Map<String, Integer> links = new HashMap<>();
+        for (Map.Entry<String, Neighbour> entry : neighbours.entrySet()) {
+            links.put(entry.getKey(), entry.getValue().getCost());
+        }
+        LSA lsa = new LSA(routerId, links, 1); //this router's LSA
+        System.out.println("[OSPF] Flooding LSA: " + lsa.serialize());
+        // Flood the LSA to all neighbours
+        for (Neighbour neighbour : neighbours.values()) {
+            neighbour.sendLSA(lsa);
+            System.out.println("[OSPF] Flooded LSA to " + neighbour.getId());
+        }
+    }
+
+    public RoutingTable calculateRoutes() {
         SPFCalculator spfCalculator = new SPFCalculator(routingTable, lsdb);
         spfCalculator.calculateShortestPaths(routerId);
+        return spfCalculator.getRoutingTable();
     }
 }

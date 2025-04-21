@@ -66,4 +66,8 @@ public class SPFCalculator {
         routingTable.getEntries().clear();
         routingTable.getEntries().putAll(updatedRoutingTable.getEntries());
     }
+
+    public RoutingTable getRoutingTable() {
+        return routingTable;
+    }
 }

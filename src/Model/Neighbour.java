@@ -9,19 +9,32 @@ import View.View;
 
 public class Neighbour implements Runnable {
 
-    @SuppressWarnings("unused") //read from constructor
+    // Neighbour class represents a connection to another OSPF router
+    // It handles the communication with the neighbour, including sending and receiving messages
+    // It also maintains the state of the neighbour and its cost
+    // The neighbour can be in one of the following states: DOWN, INIT, TWOWAY, EXSTART, EXCHANGE, LOADING, FULL
+    // The cost is the metric used to determine the best path to the neighbour
+    //In this simulation the cost is set by the user when connecting to a neighbour
+    //In the real world the cost is determined by the Default Bandwidth of the link / Interface Bandwidth
+    @SuppressWarnings("unused") //socket read from constructor, used to avoid warning
     private Socket socket;
-    private Model model;
+    private Model model; //Router
+    //Data Streams, used to send and receive messages through the socket
     private DataInputStream in;
     private DataOutputStream out;
-    private OSPFState state = OSPFState.DOWN;
+    private OSPFState state = OSPFState.DOWN; //initial state
     private String id = "UNKNOWN";
     private View view;
+    private int cost = 0;
 
-    public Neighbour(Socket socket, Model router) {
+    public Neighbour(Socket socket, Model router, View view, int cost) {
         this.socket = socket;
+        this.id = String.valueOf(socket.getLocalPort()); // Use the local port as the ID for simplicity
         this.model = router;
+        this.view = view;
+        this.cost = cost;
         try {
+            // Initialise the input and output streams for the socket
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
         } catch (IOException e) {
@@ -30,7 +43,9 @@ public class Neighbour implements Runnable {
     }
 
     @Override
-    public void run() {
+    public void run() { //main loop for the neighbour thread 
+        //handles incoming messages from the neighbour
+        //UTF is used to receive messages through the socket
         try {
             while (true) {
                 String msg = in.readUTF();
@@ -42,29 +57,34 @@ public class Neighbour implements Runnable {
         }
     }
 
-    private void handleMessage(String msg) {
+    private void handleMessage(String msg) { // Handle incoming messages from the neighbour
         if (msg.startsWith("HELLO")) {
             String[] parts = msg.split(" ");
-            if (parts.length > 1) {
+            if (parts.length > 2) {
                 this.id = parts[1];
+                try {
+                    this.cost = Integer.parseInt(parts[2]); // Update cost from the message
+                } catch (NumberFormatException e) {
+                    view.showError("[Neighbour] Invalid cost received in HELLO message: " + parts[2]);
+                }
             }
             model.receiveHello(this);
         } else if (msg.startsWith("LSA")) {
-            // Handle LSA messages
-            model.getLSDB().addLSA(LSA.deserialize(msg));
+           LSA lsa = LSA.deserialize(msg.substring(4));
+           model.receiveLSA(lsa);
         }
     }
 
-    public void sendHello() {
+    public void sendHello() { // Send HELLO message to the neighbour
         try {
-            out.writeUTF("HELLO " + model.getRouterId());
-            out.flush();
+            out.writeUTF("HELLO " + model.getRouterId() + " " + cost);
+            out.flush(); //flush means send the message immediately to ens
         } catch (IOException e) {
             view.showError("Failed to send HELLO to " + id + ": " + e.getMessage());
         }
     }
 
-    public void sendLSA(LSA lsa) {
+    public void sendLSA(LSA lsa) { // Send LSA to the neighbour through the socket
         try {
             out.writeUTF("LSA " + lsa.serialize());
             out.flush();
@@ -73,6 +93,7 @@ public class Neighbour implements Runnable {
         }
     }
 
+    //#region Getters and Setters
     public String getId() {
         return id;
     }
@@ -84,4 +105,13 @@ public class Neighbour implements Runnable {
     public void setState(OSPFState newState) {
         this.state = newState;
     }
+
+    public int getCost() {
+        return cost;
+    }
+
+    public void setCost(int cost) {
+        this.cost = cost;
+    }
+    //#endregion
 }

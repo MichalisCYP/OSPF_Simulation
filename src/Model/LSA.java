@@ -4,6 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class LSA {
+    // Link State Advertisement (LSA) class
+    // This class represents a link state advertisement
+    //The router's LSDB stores all the LSAs received from neighbours
+    //LSAs include the router ID, sequence number, and a map of links with their costsq
 
     private final String advertisingRouterId;
     private final Map<String, Integer> links; // Map of link IDs to their costs
@@ -46,6 +50,10 @@ public class LSA {
             String[] linkParts = entry.split(":");
             linkMap.put(linkParts[0], Integer.valueOf(linkParts[1]));
         }
+
+        System.out.println("[LSA] Deserialized LSA: " + routerId + " with sequence number " + seqNum);
+        System.out.println("[LSA] Links: " + linkMap);
+
         return new LSA(routerId, linkMap, seqNum);
     }
 }
