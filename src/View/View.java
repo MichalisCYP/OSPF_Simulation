@@ -25,6 +25,10 @@ public class View {
         }
     }
 
+    public void displayStatus(String status) {
+        System.out.println("[STATUS] " + status);
+    }
+
     public void showError(String message) {
         System.err.println("[ERROR] " + message);
     }

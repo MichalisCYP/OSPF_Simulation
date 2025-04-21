@@ -5,9 +5,9 @@ import java.util.*;
 public class Model {
 
     private final String routerId;
-    private final int port;
-    private final Map<String, Neighbour> neighbours = new HashMap<>();
-    private final RoutingTable routingTable = new RoutingTable();
+    private final int port; // Port number for the router to listen on for incoming connections
+    private final Map<String, Neighbour> neighbours = new HashMap<>(); // Map to store neighbours
+    private final RoutingTable routingTable = new RoutingTable(); // Routing table to store routing information
 
     public Model(String routerId, int port) {
         this.routerId = routerId;
@@ -32,7 +32,19 @@ public class Model {
 
     public void receiveHello(Neighbour neighbour) {
         System.out.println("[OSPF] Received HELLO from " + neighbour.getId());
-        neighbour.setState(OSPFState.TWOWAY);
-        addNeighbour(neighbour);
+        if (neighbour.getState() == OSPFState.DOWN) { // Only respond if the state is DOWN
+            neighbour.setState(OSPFState.TWOWAY); // Set the state to TWOWAY
+            neighbour.sendHello(); // Send HELLO back to the neighbour
+            addNeighbour(neighbour);
+            System.out.println("[OSPF] Neighbour " + neighbour.getId() + " is now in state " + neighbour.getState());
+        }
+    }
+
+    public boolean hasNeighbour(String id) {
+        return neighbours.containsKey(id);
+    }
+
+    public Set<String> getNeighbours() {
+        return neighbours.keySet();
     }
 }
