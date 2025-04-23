@@ -1,4 +1,5 @@
 package Model;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,10 +18,16 @@ public class LSDB {
     }
 
     public void addLSA(LSA lsa) {
+        System.out.println("[DEBUG] [" + java.time.LocalDateTime.now() + "] Adding LSA for Router ID: " + lsa.getAdvertisingRouterId());
         lsaMap.put(lsa.getAdvertisingRouterId(), lsa);
     }
 
     public LSA getLSA(String routerId) {
+        System.out.println("[DEBUG] [" + java.time.LocalDateTime.now() + "] Looking for LSA with Router ID: " + routerId);
+        System.out.println("Current LSAs in LSDB: " + lsaMap.keySet());
+        if (!lsaMap.containsKey(routerId)) {
+            System.out.println("[DEBUG] LSA not found for Router ID: " + routerId);
+        }
         return lsaMap.get(routerId);
     }
 
@@ -29,7 +36,7 @@ public class LSDB {
         sb.append("[LSDB] Current LSAs:\n");
         for (Map.Entry<String, LSA> entry : lsaMap.entrySet()) {
             sb.append("Router ID: ").append(entry.getKey())
-              .append(", LSA: ").append(entry.getValue().serialize()).append("\n");
+                    .append(", LSA: ").append(entry.getValue().serialize()).append("\n");
         }
         return sb.toString();
     }

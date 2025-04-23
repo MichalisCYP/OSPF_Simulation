@@ -24,6 +24,7 @@ public class LSA {
     }
 
     public Map<String, Integer> getLinks() {
+        System.out.println("[LSA " + java.time.LocalDateTime.now() + " ] Links: " + links);
         return links;
     }
 
@@ -51,8 +52,8 @@ public class LSA {
             linkMap.put(linkParts[0], Integer.valueOf(linkParts[1]));
         }
 
-        System.out.println("[LSA] Deserialized LSA: " + routerId + " with sequence number " + seqNum);
-        System.out.println("[LSA] Links: " + linkMap);
+        System.out.println("[LSA " + java.time.LocalDateTime.now() + " ] Deserialized LSA: " + routerId + " with sequence number " + seqNum);
+        System.out.println("[LSA " + java.time.LocalDateTime.now() + " ] Links: " + linkMap);
 
         return new LSA(routerId, linkMap, seqNum);
     }

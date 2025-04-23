@@ -14,7 +14,7 @@ public class View {
     }
 
     public void showMessage(String message) {
-        System.out.println("[INFO] " + message);
+        System.out.println("[INFO " + java.time.LocalDateTime.now() + " ] " + message);
     }
 
     public void displayRoutingTable(RoutingTable table) {
@@ -26,10 +26,10 @@ public class View {
     }
 
     public void displayStatus(String status) {
-        System.out.println("[STATUS] " + status);
+        System.out.println("[STATUS " + java.time.LocalDateTime.now() + " ] " + status);
     }
 
     public void showError(String message) {
-        System.err.println("[ERROR] " + message);
+        System.err.println("[ERROR " + java.time.LocalDateTime.now() + " ] " + message);
     }
 }

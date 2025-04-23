@@ -25,36 +25,54 @@ public class SPFCalculator {
         return newRoutingTable;
     }
 
-    public void calculateShortestPaths(String startRouterId) {
-        Map<String, RouteEntry> shortestPaths = new HashMap<>();
-        Set<String> visited = new HashSet<>();
+    public void calculateShortestPaths(String sourceRouterId) {
+        //https://www.youtube.com/watch?v=NyrHRNiRpds
+
+        //Route Entry has:
+        //Destination ID - Router
+        //Next Hop - Router ID of the next hop (In Dijkstra this is also known as Previous Node)
+        //Cost - Cost to reach the destination
+        Map<String, RouteEntry> distances = new HashMap<>(); //a map of router IDs to RouteEntry objects
+        //distances represents the shortest path from the source router to each destination router
+
+        Set<String> visitedNodes = new HashSet<>(); //a set of visited router IDs
         PriorityQueue<RouteEntry> priorityQueue = new PriorityQueue<>(Comparator.comparingInt(entry -> entry.cost));
+        // The priority queue is used to select the node with the smallest cost
+        // The comparator compares the cost of two RouteEntry objects
 
-        // Initialize the starting router
-        shortestPaths.put(startRouterId, new RouteEntry(startRouterId, null, 0));
-        priorityQueue.add(new RouteEntry(startRouterId, null, 0));
+        // Initialise the source node
+        distances.put(sourceRouterId, new RouteEntry(sourceRouterId, null, 0));
+        priorityQueue.add(new RouteEntry(sourceRouterId, null, 0));
 
-        while (!priorityQueue.isEmpty()) {
-            RouteEntry currentEntry = priorityQueue.poll();
-            String currentRouterId = currentEntry.destinationId;
+        while (!priorityQueue.isEmpty()) { // While there are nodes to process
+            RouteEntry currentEntry = priorityQueue.poll(); // Get the node with the smallest cost
+            //Poll removes the head of the queue and returns it
 
-            if (visited.contains(currentRouterId)) {
+            String currentNodeId = currentEntry.destinationId; // Get the ID of the current node
+
+            if (visitedNodes.contains(currentNodeId)) {
                 continue; // Skip if already visited
             }
-            visited.add(currentRouterId);
+            visitedNodes.add(currentNodeId); // Mark the current node as visited
 
-            // Get neighbors from the LSDB
-            LSA currentLSA = lsdb.getLSA(currentRouterId);
+            // Get neighbors of the current router using its LSA
+            LSA currentLSA = lsdb.getLSA(currentNodeId);
             if (currentLSA != null) {
-                for (Map.Entry<String, Integer> link : currentLSA.getLinks().entrySet()) {
-                    String neighborId = link.getKey();
-                    int linkCost = link.getValue();
+                System.out.println("[SPF DEBUG " + java.time.LocalDateTime.now() + " ] Current LSAs links: "
+                        + currentLSA.getLinks().toString());
 
-                    if (!visited.contains(neighborId)) {
-                        int newCost = currentEntry.cost + linkCost;
-                        if (!shortestPaths.containsKey(neighborId) || newCost < shortestPaths.get(neighborId).cost) {
-                            shortestPaths.put(neighborId, new RouteEntry(neighborId, currentRouterId, newCost));
-                            priorityQueue.add(new RouteEntry(neighborId, currentRouterId, newCost));
+                for (Map.Entry<String, Integer> neighbor : currentLSA.getLinks().entrySet()) // Iterate over neighbors
+                {
+                    String neighborId = neighbor.getKey();
+                    int edgeWeight = neighbor.getValue();
+
+                    if (!visitedNodes.contains(neighborId)) //if the neighbour has not been visited
+                    {
+                        int newDistance = currentEntry.cost + edgeWeight; // Calculate the new distance
+                        if (!distances.containsKey(neighborId) || newDistance < distances.get(neighborId).cost) //if the neighbour is not in the distances map or the new distance is less than the current distance
+                        {
+                            distances.put(neighborId, new RouteEntry(neighborId, currentNodeId, newDistance)); // Update the distance
+                            priorityQueue.add(new RouteEntry(neighborId, currentNodeId, newDistance)); // Add to the priority queue
                         }
                     }
                 }
@@ -62,7 +80,7 @@ public class SPFCalculator {
         }
 
         // Update the routing table
-        RoutingTable updatedRoutingTable = buildRoutingTable(shortestPaths);
+        RoutingTable updatedRoutingTable = buildRoutingTable(distances);
         routingTable.getEntries().clear();
         routingTable.getEntries().putAll(updatedRoutingTable.getEntries());
     }

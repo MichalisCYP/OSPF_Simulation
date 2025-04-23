@@ -1,11 +1,10 @@
 package Model;
 
+import View.View;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-
-import View.View;
 
 public class Neighbour implements Runnable {
 
@@ -29,10 +28,13 @@ public class Neighbour implements Runnable {
 
     public Neighbour(Socket socket, Model router, View view, int cost) {
         this.socket = socket;
-        this.id = String.valueOf(socket.getLocalPort()); // Use the local port as the ID for simplicity
         this.model = router;
         this.view = view;
         this.cost = cost;
+
+        // Use the remote port as the ID for incoming connections
+        this.id = String.valueOf(socket.getPort());
+
         try {
             // Initialise the input and output streams for the socket
             this.in = new DataInputStream(socket.getInputStream());
@@ -70,8 +72,8 @@ public class Neighbour implements Runnable {
             }
             model.receiveHello(this);
         } else if (msg.startsWith("LSA")) {
-           LSA lsa = LSA.deserialize(msg.substring(4));
-           model.receiveLSA(lsa);
+            LSA lsa = LSA.deserialize(msg.substring(4));
+            model.receiveLSA(lsa);
         }
     }
 
