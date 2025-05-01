@@ -6,7 +6,7 @@ import java.util.Scanner;
 
 public class View {
 
-    private final Scanner input = new Scanner(System.in);
+    private final Scanner input = new Scanner(System.in); // Scanner for user input, which is used to read commands from the console
 
     public String prompt(String message) {
         System.out.print(message);

@@ -36,7 +36,7 @@ public class LSDB {
         sb.append("[LSDB] Current LSAs:\n");
         for (Map.Entry<String, LSA> entry : lsaMap.entrySet()) {
             sb.append("Router ID: ").append(entry.getKey())
-                    .append(", LSA: ").append(entry.getValue().serialize()).append("\n");
+                    .append(", LSA: ").append(entry.getValue().serialise()).append("\n");
         }
         return sb.toString();
     }

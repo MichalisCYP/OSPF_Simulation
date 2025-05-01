@@ -8,7 +8,13 @@ import java.util.PriorityQueue;
 import java.util.Set;
 
 public class SPFCalculator {
-
+    // This class implements Dijkstra's algorithm to calculate the shortest paths
+    // from a source router to all other routers in the network
+    // It uses the LSDB (Link State Database) to get the link state advertisements (LSAs)
+    // and builds the routing table based on the shortest paths
+    // The routing table is a map of destination IDs to RouteEntry objects
+    // Each RouteEntry contains the destination ID, next hop, and cost to reach the destination
+    
     private final RoutingTable routingTable;
     private final LSDB lsdb;
 
@@ -18,6 +24,10 @@ public class SPFCalculator {
     }
 
     private RoutingTable buildRoutingTable(Map<String, RouteEntry> shortestPaths) {
+        // This method builds the routing table based on the shortest paths calculated by Dijkstra's algorithm
+        // It creates a new RoutingTable object and populates it with the RouteEntry objects from the shortestPaths map
+        // The RouteEntry objects contain the destination ID, next hop, and cost to reach the destination
+        // The routing table is then returned
         RoutingTable newRoutingTable = new RoutingTable();
         for (RouteEntry entry : shortestPaths.values()) {
             newRoutingTable.update(entry.destinationId, entry);
@@ -43,6 +53,7 @@ public class SPFCalculator {
         // Initialise the source node
         distances.put(sourceRouterId, new RouteEntry(sourceRouterId, null, 0));
         priorityQueue.add(new RouteEntry(sourceRouterId, null, 0));
+        //priority queue is used to select the node with the smallest cost
 
         while (!priorityQueue.isEmpty()) { // While there are nodes to process
             RouteEntry currentEntry = priorityQueue.poll(); // Get the node with the smallest cost

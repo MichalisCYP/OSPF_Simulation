@@ -63,6 +63,9 @@ public class Model {
         }
         LSA lsa = new LSA(routerId, links, 1);
 
+        // Add the LSA to this router's LSDB as well
+        lsdb.addLSA(lsa);
+
         neighbour.sendLSA(lsa);
         System.out.println("[OSPF " + java.time.LocalDateTime.now() + " ] Sent LSA to " + neighbour.getId());
     }
@@ -76,15 +79,15 @@ public class Model {
     }
 
     public void receiveLSA(LSA lsa) { //called from the neighbour thread when an LSA message is received
-        // lsdb.addLSA(lsa);
         System.out.println("[OSPF " + java.time.LocalDateTime.now() + " ] Received LSA from " + lsa.getAdvertisingRouterId());
-        //check if the LSA is already in the LSDB
+        // Add the LSA to the LSDB
+        lsdb.addLSA(lsa);
+        // Check if the LSA is already in the LSDB
         if (lsdb.hasLSA(lsa.getAdvertisingRouterId())) {
             System.out.println("[OSPF " + java.time.LocalDateTime.now() + " ] LSA already exists in LSDB");
         } else {
-            //if it doesn't exist, add it to the LSDB and flood updated LSA to all neighbours
+            // If it doesn't exist, flood updated LSA to all neighbours
             System.out.println("[OSPF " + java.time.LocalDateTime.now() + " ] Adding LSA to LSDB");
-            lsdb.addLSA(lsa);
             System.out.println("[OSPF " + java.time.LocalDateTime.now() + " ] Flooding LSA to all neighbours");
             floodLSA();
         }
@@ -110,7 +113,9 @@ public class Model {
             links.put(entry.getKey(), entry.getValue().getCost());
         }
         LSA lsa = new LSA(routerId, links, 1); //this router's LSA
-        System.out.println("[OSPF " + java.time.LocalDateTime.now() + " ] Flooding LSA: " + lsa.serialize());
+        // Add the LSA to this router's LSDB as well
+        lsdb.addLSA(lsa);
+        System.out.println("[OSPF " + java.time.LocalDateTime.now() + " ] Flooding LSA: " + lsa.serialise());
         // Flood the LSA to all neighbours
         for (Neighbour neighbour : neighbours.values()) {
             neighbour.sendLSA(lsa);

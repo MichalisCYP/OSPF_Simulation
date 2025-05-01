@@ -11,7 +11,8 @@ public class LSA {
 
     private final String advertisingRouterId;
     private final Map<String, Integer> links; // Map of link IDs to their costs
-    private final long sequenceNumber;
+    //Links simulates physical connections between routers, cost is passed as a parameter manually
+    private final long sequenceNumber; // Sequence number for the LSA, used for determining the freshness of the LSA
 
     public LSA(String advertisingRouterId, Map<String, Integer> links, long sequenceNumber) {
         this.advertisingRouterId = advertisingRouterId;
@@ -32,7 +33,8 @@ public class LSA {
         return sequenceNumber;
     }
 
-    public String serialize() {
+    public String serialise()  //serialise to pass to the neighbours
+    { 
         StringBuilder sb = new StringBuilder();
         sb.append(advertisingRouterId).append(";").append(sequenceNumber).append(";");
         for (Map.Entry<String, Integer> entry : links.entrySet()) {
@@ -41,7 +43,7 @@ public class LSA {
         return sb.toString();
     }
 
-    public static LSA deserialize(String data) {
+    public static LSA deserialise(String data) {
         String[] parts = data.split(";");
         String routerId = parts[0];
         long seqNum = Long.parseLong(parts[1]);

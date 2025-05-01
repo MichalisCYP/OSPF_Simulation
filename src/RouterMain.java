@@ -6,7 +6,7 @@ import View.View;
 public class RouterMain {
 
     public static void main(String[] args) {
-        int port = Integer.parseInt(args[0]);
+        int port = Integer.parseInt(args[0]); //port number is passed as an argument
         Model model = new Model("R" + port, port);
         View view = new View();
         Controller controller = new Controller(model, view);

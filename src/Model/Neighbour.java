@@ -17,6 +17,8 @@ public class Neighbour implements Runnable {
     //In the real world the cost is determined by the Default Bandwidth of the link / Interface Bandwidth
     @SuppressWarnings("unused") //socket read from constructor, used to avoid warning
     private Socket socket;
+    @SuppressWarnings("unused") //port read from constructor, used to avoid warning
+    private String port; //port of the neighbour (string since its used for IDs and manually set)
     private Model model; //Router
     //Data Streams, used to send and receive messages through the socket
     private DataInputStream in;
@@ -26,14 +28,16 @@ public class Neighbour implements Runnable {
     private View view;
     private int cost = 0;
 
-    public Neighbour(Socket socket, Model router, View view, int cost) {
+    public Neighbour(Socket socket, String port, Model router, View view, int cost) {
         this.socket = socket;
         this.model = router;
         this.view = view;
         this.cost = cost;
+        this.port = port;
 
         // Use the remote port as the ID for incoming connections
-        this.id = String.valueOf(socket.getPort());
+        this.id = "R" + port;
+        System.out.println("Initialised neighbour with " + this.id);
 
         try {
             // Initialise the input and output streams for the socket
@@ -72,9 +76,10 @@ public class Neighbour implements Runnable {
             }
             model.receiveHello(this);
         } else if (msg.startsWith("LSA")) {
-            LSA lsa = LSA.deserialize(msg.substring(4));
+            LSA lsa = LSA.deserialise(msg.substring(4));
             model.receiveLSA(lsa);
         }
+        //we could also implement OSPF in more detail, including LSDB exchange, LSRs, LSACKs, but for now we will keep it simple
     }
 
     public void sendHello() { // Send HELLO message to the neighbour
@@ -88,7 +93,7 @@ public class Neighbour implements Runnable {
 
     public void sendLSA(LSA lsa) { // Send LSA to the neighbour through the socket
         try {
-            out.writeUTF("LSA " + lsa.serialize());
+            out.writeUTF("LSA " + lsa.serialise());
             out.flush();
         } catch (IOException e) {
             view.showError("Failed to send LSA to " + id + ": " + e.getMessage());
@@ -114,6 +119,14 @@ public class Neighbour implements Runnable {
 
     public void setCost(int cost) {
         this.cost = cost;
+    }
+
+    public void setPort(String port) {
+        this.port = port;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
     //#endregion
 }

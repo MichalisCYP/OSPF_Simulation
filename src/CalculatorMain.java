@@ -13,10 +13,11 @@ public class CalculatorMain {
         LSDB lsdb = new LSDB();
 
         // Populate the LSDB with some example data
-        lsdb.addLSA(new LSA("Router1", Map.of("Router2", 10, "Router3", 15), System.currentTimeMillis()));
-        lsdb.addLSA(new LSA("Router2", Map.of("Router1", 10, "Router4", 20), System.currentTimeMillis()));
-        lsdb.addLSA(new LSA("Router3", Map.of("Router1", 15, "Router4", 25), System.currentTimeMillis()));
-        lsdb.addLSA(new LSA("Router4", Map.of("Router2", 20, "Router3", 25), System.currentTimeMillis()));
+        lsdb.addLSA(new LSA("5002", Map.of("5003", 3, "5004", 10), System.currentTimeMillis()));
+        lsdb.addLSA(new LSA("5003", Map.of("5002", 3, "5004", 2, "5005", 5), System.currentTimeMillis()));
+        lsdb.addLSA(new LSA("5004", Map.of("5002", 10, "5003", 2, "5005", 10), System.currentTimeMillis()));
+        lsdb.addLSA(new LSA("5005", Map.of("5003", 5, "5004", 10, "5006", 10), System.currentTimeMillis()));
+        lsdb.addLSA(new LSA("5006", Map.of("5005", 10), System.currentTimeMillis()));
 
         // Create an empty RoutingTable
         RoutingTable routingTable = new RoutingTable();
@@ -25,7 +26,7 @@ public class CalculatorMain {
         SPFCalculator spfCalculator = new SPFCalculator(routingTable, lsdb);
 
         // Calculate shortest paths starting from "Router1"
-        spfCalculator.calculateShortestPaths("Router1");
+        spfCalculator.calculateShortestPaths("5002");
 
         // Print the resulting routing table
         System.out.println("Routing Table:");
